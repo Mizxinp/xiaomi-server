@@ -15,10 +15,7 @@ router.get('/goodsList', function (req, res, next) {
                 res.json({
                     status: '0',
                     msg: '',
-                    result: {
-                        hotGoods: doc[0].hotGoods,
-                        starGoods: doc[0].starGoods
-                    }
+                    result: doc
                 })
             }
         }
@@ -36,29 +33,15 @@ router.get('/goodsDetail', function (req, res, next) {
             })
         } else {
             if (doc) {
-                // console.log(doc[0])
-                var goodsList = doc[0]
-                goodsList.hotGoods.forEach(item => {
-                    if (item.productId == productId) {
+                doc.forEach(item => {
+                    if(item.productId == productId){
                         res.json({
                             status: '0',
                             msg: '',
                             result: item
                         })
-                        console.log(item)
                     }
                 });
-                goodsList.starGoods.forEach(element => {
-                    if (element.productId == productId) {
-                        res.json({
-                            status: '0',
-                            msg: '',
-                            result: element
-                        })
-                        console.log(element)
-                    }
-                });
-
 
             }
         }
@@ -83,7 +66,7 @@ router.post('/addCart', function (req, res, next) {
             })
         } else {
             if (userDoc) {
-                console.log(userDoc)
+                // console.log(userDoc)
                 //判断购物车是否已经存在该商品，存在则num加一
                 var goodsItem = '';
                 userDoc.cartList.forEach(function (item) {
@@ -109,7 +92,7 @@ router.post('/addCart', function (req, res, next) {
                         }
                     })
                 } else {//不存在就添加一条
-                    Goods.find(function (err1, doc) {
+                    Goods.findOne({productId:productId},function (err1, doc) {
                         if (err1) {
                             res.json({
                                 status: '1',
@@ -117,36 +100,9 @@ router.post('/addCart', function (req, res, next) {
                             })
                         } else {
                             if (doc) {
-                                
-                                var goodsList = doc[0];
-                                var checkItem = {};
-                                // console.log(goodsList)
-                                goodsList.hotGoods.forEach(item => {
-                                    if (item.productId == productId) {
-                                        item.productNum = '1';
-                               
-                                        item.checked = '1';
-                                        checkItem = item
-                                    }
-                                });
-                                goodsList.starGoods.forEach(element => {
-                                    if (element.productId == productId) {
-                                        element.productNum = '1';
-                                       
-                                        element.checked = '1';
-                                        checkItem = element
-                                    }
-                                });
-
-
-
-
-
-
-
-
-
-                                userDoc.cartList.push(checkItem);
+                                doc.productNum = '1';
+                                doc.checked = '1';
+                                userDoc.cartList.push(doc);
                                 //    console.log(userDoc.cartList)
                                 userDoc.save(function (err2, doc2) {
                                     if (err2) {
@@ -171,5 +127,44 @@ router.post('/addCart', function (req, res, next) {
         }
     })
 })
+
+
+// 搜索功能
+router.get('/search',function(req,res,next){
+    let keyWords = req.param('keyWords');
+    // console.log(keyWords)
+    searchFinal = Goods.find(function(err,doc){
+        if(err){
+            res.json({
+                status:'1',
+                msg:err.message,
+                resule:''
+            })
+        }else{
+            if(doc){
+                let serchResult = []
+                doc.forEach(item => {
+                    
+                    if(item.productName.indexOf(keyWords) != -1){
+                        serchResult.push(item)
+                    }
+                });
+                // console.log(serchResult)
+                searchFinal = serchResult
+                res.json({
+                    status:'0',
+                    msg:'',
+                    result:serchResult
+                })
+            }
+        }
+        
+    })
+    
+})
+
+
+
+
 
 module.exports = router;
